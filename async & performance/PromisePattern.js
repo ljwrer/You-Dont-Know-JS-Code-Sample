@@ -103,4 +103,164 @@ const test6 = function () {
         console.log(vals);         // [42,84,"Oops"]
     });
 }
-test6()
+const test7 = function () {
+    var p = timeoutPromise(resolve=>resolve('ok'),4000);
+    Promise.race( [
+        p,
+        timeoutPromise(resolve=>resolve('ops'),2000)
+    ] )
+        .then(
+            value => {
+                console.log(1)
+                console.log(value)
+            },
+            reason => {
+                console.log(2)
+                console.log(reason)
+            }
+        );
+    p.then(value => {
+        console.log(3)
+        console.log(value)
+    },reason => {
+        console.log(4)
+        console.log(reason)
+    });
+}
+const test8 = function () {
+   const p = new Promise(function (resolve,reject) {
+       setTimeout(function () {
+           if(Math.random()>0.5){
+               resolve(100*Math.random())
+           }else {
+               reject('x')
+           }
+       },100)
+   })
+    p.then(value => console.log(value))
+    p.then(value => console.log(value))
+    p.then(value => console.log(value))
+    p.then(value => console.log(value))
+}
+const test9 = function () {
+    const foo = function () {
+        console.log('foo1')
+        bar().then(function () {
+            console.log('foo2')
+        })
+    }
+    const bar = function () {
+        return new Promise(resolve => {
+            console.log('bar')
+            resolve()
+        })
+    }
+    setTimeout(function () {
+        console.log(0)
+    },0)
+    console.log(1)
+    foo()
+    console.log(2)
+
+}
+const test10 = function () {
+    const foo = async function () {
+        console.log('foo1')
+        await bar()
+        console.log('foo2') //in microtask
+        Promise.resolve().then(value => {
+            console.log('foo3')
+        })
+    }
+    const bar = async function () {
+        console.log('bar')
+    }
+    setTimeout(function () {
+        console.log(0) //in macro task
+    },0)
+    console.log(1)
+    foo()
+    console.log(2)
+    //1 foo1 2
+}
+const test11 = function () {
+    const p = Promise.resolve().then(function () {
+        return new Promise(resolve => {
+            resolve(10)
+            console.log(11)
+            return new Promise(resolve2 => {
+                resolve2(20)
+                console.log(21)
+                return new Promise(resolve3 => {
+                    resolve3(30)
+                    console.log(31)
+                })
+            })
+        })
+    })
+    p.then(value => {
+        console.log(value)
+        console.log(p)
+    },reason => {
+        console.log(reason)
+    })
+
+}
+const test12 = function () {
+    const p1 = Promise.resolve(1)
+    const p2 = Promise.reject(1)
+    p1.then().then(value => {
+        console.log(value)
+    })
+    p2.then().then(null,reason => {
+        console.log(reason)
+    })
+}
+const test13 = function () {
+if(!Promise.first){
+    Promise.first = function (prs,errCb) {
+        return new Promise(function (resolve, reject) {
+            let i = 0
+            prs.forEach(function (pr) {
+                return Promise.resolve(pr).then(resolve).catch(function (reason) {
+                    i++
+                    if(i===prs.length){
+                        console.log('all break')
+                        reject(reason)
+                    }
+                    errCb(reason)
+                })
+            })
+        })
+    }
+}
+    const p1 = new Promise(function (resolve,reject) {
+        setTimeout(function () {
+            reject(1)
+        },2000)
+    })
+    const p2 = new Promise(function (resolve,reject) {
+        setTimeout(function () {
+            reject(2)
+        },1500)
+    })
+
+    Promise.first([p1,p2],function (reason) {
+        console.log(reason)
+    }).then(value => {
+        console.log(`value:${value}`)
+    }).catch(reason => {
+        console.log(`reason:${reason}`)
+    })
+}
+const test14 = function () {
+    function spread(fn) {
+        return Function.apply.bind( fn, null );
+    }
+    spread(function (x,y,z) {
+        console.log(x,y,z)
+    })([1,2,3])
+}
+test14()
+
+
